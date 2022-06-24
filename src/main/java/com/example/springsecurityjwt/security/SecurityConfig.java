@@ -37,6 +37,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     //Our CustomAuthenticationFilter takes AuthenticationManager in constructor.
     //And authenticationManagerBean is a method from WebSecurityConfigurerAdapter,
     //So we can override here and it returns a necessary bean.
+    //We need to generate token, assign token, send it to user
+    //We can do all by ourselves, but we will use an external library to do it
+    //Library: Java JWT
     @Bean
     @Override
     public AuthenticationManager authenticationManagerBean() throws Exception {
