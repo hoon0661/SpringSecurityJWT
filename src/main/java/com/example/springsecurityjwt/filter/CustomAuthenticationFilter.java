@@ -29,7 +29,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 
     private final AuthenticationManager authenticationManager;
 
-    public CustomAuthenticationFilter(AuthenticationManager authenticationManager){
+    public CustomAuthenticationFilter(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
     }
 
@@ -56,7 +56,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     //In this project, we will pass a token using that response.
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
-        User user = (User)authentication.getPrincipal(); // returns user that is successfully authenticated
+        User user = (User) authentication.getPrincipal(); // returns user that is successfully authenticated
 
         //Now, create JWT
         Algorithm algorithm = Algorithm.HMAC256("secret".getBytes()); //Algorithm to use. In real world, need to make it more complex and encrypt the secret.
@@ -73,11 +73,11 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
                 .withIssuer(request.getRequestURL().toString()) // author, or company of token
                 .sign(algorithm); // no need to pass roles
 
-        /*
-        // put tokens in header
-        response.setHeader("access_token", access_token);
-        response.setHeader("refresh_token", refresh_token);
-        */
+
+//        // put tokens in header
+//        response.setHeader("access_token", access_token);
+//        response.setHeader("refresh_token", refresh_token);
+
 
         //or send this in response body in JSON format
         Map<String, String> tokens = new HashMap<>();

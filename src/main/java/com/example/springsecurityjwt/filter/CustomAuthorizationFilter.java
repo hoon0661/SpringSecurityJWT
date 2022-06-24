@@ -16,7 +16,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.util.Arrays.stream;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -30,31 +33,26 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         //when user tries to login, just pass request and response to the filter chain
-        if (request.getServletPath().equals("/api/login")) {
+        if (request.getServletPath().equals("/api/login") || request.getServletPath().equals("/api/token/refresh")) {
             filterChain.doFilter(request, response);
         }
         //if user already logged in
         else {
-            String authorizationHeader = request.getHeader(AUTHORIZATION); // Get authorization header
-
-            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-
+            String authorizationHeader = request.getHeader(AUTHORIZATION);
+            if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 try {
-
                     String token = authorizationHeader.substring("Bearer ".length());
                     Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
 
                     // Verify token
-                    JWTVerifier verifier = JWT.require(algorithm).build(); // Create verifier
+                    JWTVerifier verifier = JWT.require(algorithm).build(); // create verifier
                     DecodedJWT decodedJWT = verifier.verify(token);
                     String username = decodedJWT.getSubject();
-
                     String[] roles = decodedJWT.getClaim("roles").asArray(String.class);
 
                     // Spring Security expect SimpleGrantedAuthority for roles.
                     // So we need to convert roles to Collection of SimpleGrantedAuthority
                     Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
-
                     stream(roles).forEach(role -> {
                         authorities.add(new SimpleGrantedAuthority(role));
                     });
@@ -68,13 +66,13 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
                     // and pass it to filter chain
                     filterChain.doFilter(request, response);
 
-                } catch (Exception e) {
-                    log.error("Error logging in: {}", e.getMessage());
-                    response.setHeader("error", e.getMessage());
+                }catch (Exception exception) {
+                    log.error("Error logging in: {}", exception.getMessage());
+                    response.setHeader("error", exception.getMessage());
                     response.setStatus(FORBIDDEN.value());
-//                    response.sendError(FORBIDDEN.value());
+                    //response.sendError(FORBIDDEN.value());
                     Map<String, String> error = new HashMap<>();
-                    error.put("error_message", e.getMessage());
+                    error.put("error_message", exception.getMessage());
                     response.setContentType(APPLICATION_JSON_VALUE);
                     new ObjectMapper().writeValue(response.getOutputStream(), error);
                 }
